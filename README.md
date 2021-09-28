@@ -53,11 +53,11 @@ end
 MyApp.Add.perform(2, 2) |> Effect.execute() # => "2 + 2 = 4"
 ```
 
-### No sophisticated mocros or DSLs
+### No sophisticated macros or DSLs
 
-Elixir is similar to Lisp in that it allows you to extend the
-language so that it's no more the language it was before. Some see it
-as advantage, but, really, have you seen a code that abuses that
+Elixir is similar to Lisp in its ability to extend the language so
+that it's no more the language it was before. Some people see it
+as an advantage, but, really, have you seen a code that abuses that
 ability? At best it's just hard to read, at worst you need to learn a
 complitely new language.
 
@@ -75,10 +75,10 @@ library provides a couple of ways to compose the effects.
 
 #### Monad
 
-As an abstraction over imperative computations we can define a monad
-interface. There is nothing to be afraid of, it's not rocket
-science. We just have three functions: `return/1`, `map/2`, and
-`bind/2` in `Effect.Monad` module.
+Being an abstraction over imperative computations, effects can be
+provided with a monad interface. There is nothing to be afraid of,
+it's not rocket science. We just have three functions: `return/1`,
+`map/2`, and `bind/2` in `Effect.Monad` module.
 
 `Effect.Monad.return/1` takes a pure value (e.g. a number) and returns
 an effect. On its own this function isn't of any use, but it becomes
@@ -121,11 +121,11 @@ iex(3)> return(1)
 #### Pipe
 
 We understand that monads, being pretty nice abstraction that allows
-you to do cool things, isn't really convinient for expressing your
-logic in understandable way. So we have another, for some more
+you to do cool things, aren't really convinient for expressing your
+logic in an understandable way. So we have another, for some more
 familiar, way to compose effects: `Effect.Pipe`.
 
-Its interface is simmilar to
+Its interface is similar to
 [`Ecto.Multi`](https://hexdocs.pm/ecto/Ecto.Multi.html) or
 [`Sage`](https://hexdocs.pm/sage), but it just composes effects,
 nothing more. (Still, the database and other transactions may be
