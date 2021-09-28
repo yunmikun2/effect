@@ -1,17 +1,17 @@
-defmodule Effect.Fail do
+defmodule Effect.Pure do
   @moduledoc false
 
   alias Effect.Executable
 
-  defstruct [:code]
+  defstruct [:value]
 
-  def new(code) do
-    %__MODULE__{code: code}
+  def new(value) do
+    %__MODULE__{value: value}
   end
 
   defimpl Executable do
-    def execute(%{code: code}) do
-      {:error, code}
+    def execute(%{value: value}) do
+      {:ok, value}
     end
   end
 

@@ -1,59 +1,47 @@
 defmodule Effect.Pipe do
-  @moduledoc false
+  @moduledoc """
+  Provides composition of effects where result of each resulting
+  action is assigned a key.
+  """
 
-  defstruct keys: MapSet.new(), actions: []
+  import Effect, only: [bind: 2, fail: 1, map: 2, or_else: 2, return: 1]
 
-  @opaque t :: %__MODULE__{}
-
+  @doc """
+  Return an empty pipe with no actions.
+  """
   @spec new :: Effect.t()
   def new do
-    %__MODULE__{}
+    return(%{})
   end
 
+  @doc """
+  Return a pipe where the result of the `effect` is assigned the `key`.
+  """
   @spec new(Effect.t(), atom) :: Effect.t()
   def new(effect, key) when is_atom(key) do
     then(new(), key, fn _ -> effect end)
   end
 
-  @spec then(t, atom, (%{required(atom) => term} -> Effect.t())) :: Effect.t()
-  def then(%__MODULE__{keys: keys, actions: actions} = pipe, key, fun) do
-    if MapSet.member?(keys, key) do
-      raise ArgumentError, "key #{key} already used"
-    end
+  @doc """
+  Add new action to the pipe.
+  """
+  @spec then(Effect.t(), atom, (%{required(atom) => term} -> Effect.t())) :: Effect.t()
+  def then(pipe, key, fun) do
+    bind(pipe, fn state ->
+      assert_key_not_used!(state, key)
 
-    %__MODULE__{pipe | keys: MapSet.put(keys, key), actions: [{key, fun} | actions]}
-  end
-
-  def reduce(%__MODULE__{actions: actions}, reducer) do
-    actions
-    |> Enum.reverse()
-    |> Enum.reduce({:ok, %{}}, fn {key, fun}, mstate ->
-      with {:ok, state} <- mstate do
-        case reducer.(fun.(state)) do
-          {:ok, result} -> {:ok, Map.put(state, key, result)}
-          {:error, error} -> {:error, %{key => error}}
-        end
-      end
+      fun.(state)
+      |> map(&Map.put(state, key, &1))
+      |> or_else(fn error ->
+        fail(%{results: state, error: %{key => error}})
+      end)
     end)
   end
 
-  defimpl Effect do
-    import Effect.Monad, only: [return: 1, bind: 2]
-
-    alias Effect.Fail
-
-    def execute(%{actions: actions}) do
-      actions
-      |> Enum.reverse()
-      |> Enum.reduce(return(%{}), fn {key, fun}, effect ->
-        bind(effect, fn state ->
-          case Effect.execute(fun.(state)) do
-            {:ok, result} -> return(Map.put(state, key, result))
-            {:error, error} -> Fail.new(%{key => error})
-          end
-        end)
-      end)
-      |> Effect.execute()
+  defp assert_key_not_used!(state, key) do
+    case state do
+      %{^key => _} -> raise ArgumentError, "key #{key} already used"
+      _ -> :ok
     end
   end
 end
