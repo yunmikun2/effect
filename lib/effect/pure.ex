@@ -1,7 +1,7 @@
 defmodule Effect.Pure do
   @moduledoc false
 
-  alias Effect.Executable
+  alias Effect.{Executable, Interpretable}
 
   defstruct [:value]
 
@@ -12,6 +12,12 @@ defmodule Effect.Pure do
   defimpl Executable do
     def execute(%{value: value}) do
       {:ok, value}
+    end
+  end
+
+  defimpl Interpretable do
+    def interpret(effect, _interpreter) do
+      Executable.execute(effect)
     end
   end
 

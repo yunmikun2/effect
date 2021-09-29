@@ -1,7 +1,7 @@
 defmodule Effect.Fail do
   @moduledoc false
 
-  alias Effect.Executable
+  alias Effect.{Executable, Interpretable}
 
   defstruct [:code]
 
@@ -12,6 +12,12 @@ defmodule Effect.Fail do
   defimpl Executable do
     def execute(%{code: code}) do
       {:error, code}
+    end
+  end
+
+  defimpl Interpretable do
+    def interpret(effect, _interpreter) do
+      Executable.execute(effect)
     end
   end
 

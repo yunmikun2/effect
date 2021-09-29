@@ -1,6 +1,6 @@
 defmodule Effect do
   @moduledoc """
-  Provides an effect abstraction.
+  Functions to work with effects.
   """
 
   alias Effect.{Bind, BindErr, Executable, Fail, Interpretable, Map, Pure}
@@ -14,6 +14,16 @@ defmodule Effect do
   ## Example
 
       iex(1)> Effect.execute(Effect.return(1))
+      {:ok, 1}
+
+  > **Note:** While being an effect, the returned value isn't captured
+  > by `Effect.Interpretable` protocol, because otherwise you would
+  > need to know how the effect is implemented to get the pure value
+  > from its insides.
+
+      iex(1)> Effect.interpret(Effect.return(1), fn :unknown ->
+      ...(1)>   {:error, :unknown}
+      ...(1)> end)
       {:ok, 1}
   """
   @spec return(a) :: t(a) when a: term
@@ -112,6 +122,16 @@ defmodule Effect do
   ## Example
 
       iex(1)> Effect.execute(Effect.fail(:oops))
+      {:error, :oops}
+
+  > **Note:** While being an effect, the returned value isn't captured
+  > by `Effect.Interpretable` protocol, because otherwise you would
+  > need to know how the effect is implemented to get the pure value
+  > from its insides.
+
+      iex(1)> Effect.interpret(Effect.fail(:oops), fn :unknown ->
+      ...(1)>   {:ok, :unknown}
+      ...(1)> end)
       {:error, :oops}
   """
   @spec fail(term) :: t
