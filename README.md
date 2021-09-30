@@ -110,11 +110,10 @@ create conditional switching, and run effects in a loop.
 `Effect.fail/1` allows you to stop computations and return an error.
 
 ```elixir
-iex(1)> import Effect.Monad, only: [return: 1, bind: 2]
-iex(2)> alias Effect.Fail
-iex(3)> return(1)
-...(3)> |> bind(fn _ -> Fail.new("something went wrong") end)
-...(3)> |> Effect.execute()
+iex(1)> import Effect, only: [bind: 2, fail: 1, return: 1]
+iex(2)> return(1)
+...(2)> |> bind(fn _ -> fail("something went wrong") end)
+...(2)> |> Effect.execute()
 {:error, "something went wrong"}
 ```
 
@@ -136,7 +135,7 @@ implemented as an effect that wraps actions; see
 [effect_ecto](https://github.com/yunmikun2/effect_ecto) for details).
 
 ```elixir
-iex(1)> import Effect.Monad, only: [return: 1]
+iex(1)> import Effect, only: [return: 1]
 iex(2)> alias Effect.Pipe
 iex(3)> Pipe.new()
 ...(3)> |> Pipe.then(:x, fn _ -> return(1) end)
@@ -151,7 +150,7 @@ execution. In case the pipeline fails, you get the name of a step it
 failed at.
 
 ```elixir
-iex(1)> import Effect.Monad, only: [fail: 1, return: 1]
+iex(1)> import Effect, only: [fail: 1, return: 1]
 iex(2)> alias Effect.Pipe
 iex(3)> Pipe.new()
 ...(3)> |> Pipe.then(:x, fn _ -> return(1) end)
