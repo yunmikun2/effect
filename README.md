@@ -13,9 +13,9 @@ The library is based on three decisions that influence its design:
 ### Side-effects as data
 
 We wanted a way to express any side-effect as data that can be
-checked in tests without affecting the real world. So we have `Effect`
-protocol with a function -- `execute/1` -- that takes an arbitrary
-data that implements the protocol.
+checked in tests without affecting the real world. So we have
+`Effect.Executable` protocol with a function -- `execute/1` -- that
+takes an arbitrary data that implements the protocol.
 
 The implementation of the `execute/1` function must return either
 `{:ok, term}`, or `{:error, term}` which may be considered standard
@@ -26,7 +26,7 @@ defmodule MyApp.LoggerEffect do
   defstruct [:msg]
   def new(msg), do: %__MODULE__{msg: msg}
 
-  defimpl Effect do
+  defimpl Effect.Executable do
     require Logger
 
     def execute(%{msg: msg}) do
@@ -40,8 +40,9 @@ end
 ```
 
 Now your logic code can return the data struct that implements
-`Effect`, which can be checked in tests without running actual
-side-effect. You just pass this value to `Effect.execute/1` and go.
+`Effect.Executable`, which can be checked in tests without running
+actual side-effect. You just pass this value to `Effect.execute/1` and
+go.
 
 ```elixir
 defmodule MyApp.Add do
@@ -77,28 +78,28 @@ library provides a couple of ways to compose the effects.
 
 Being an abstraction over imperative computations, effects can be
 provided with a monad interface. There is nothing to be afraid of,
-it's not rocket science. We just have three functions: `return/1`,
-`map/2`, and `bind/2` in `Effect.Monad` module.
+it's not rocket science. We just have five functions: `return/1`,
+`fail/1`, `map/2`, and `bind/2`, `or_else/2` in `Effect` module.
 
-`Effect.Monad.return/1` takes a pure value (e.g. a number) and returns
+`Effect.return/1` takes a pure value (e.g. a number) and returns
 an effect. On its own this function isn't of any use, but it becomes
 pretty usefull in combination with others.
 
-`Effect.Monad.map/2` takes an effect and a function that maps
+`Effect.map/2` takes an effect and a function that maps
 resulting value into another value, and returns an effect.
 
 ```elixir
-iex(1)> import Effect.Monad, only: [return: 1, map: 2]
+iex(1)> import Effect, only: [return: 1, map: 2]
 iex(2)> return(1) |> map(fn x -> x + 1 end) |> Effect.execute()
 {:ok, 2}
 ```
 
-`Effect.Monad.bind/2` allows real composition. It takes an effect and
-a function that maps the returning value of the original effect into a
+`Effect.bind/2` allows real composition. It takes an effect and a
+function that maps the returning value of the original effect into a
 new effect.
 
 ```elixir
-iex(1)> import Effect.Monad, only: [return: 1, bind: 2]
+iex(1)> import Effect, only: [return: 1, bind: 2]
 iex(2)> return(1) |> bind(fn x -> return(x + 1) end) |> Effect.execute()
 {:ok, 2}
 ```
@@ -106,8 +107,7 @@ iex(2)> return(1) |> bind(fn x -> return(x + 1) end) |> Effect.execute()
 With the `bind/2` function you can compose effects into a sequence,
 create conditional switching, and run effects in a loop.
 
-Besides these function, there is another predefinded effect:
-`Effect.Fail`. It allows you to stop computations and return an error.
+`Effect.fail/1` allows you to stop computations and return an error.
 
 ```elixir
 iex(1)> import Effect.Monad, only: [return: 1, bind: 2]
@@ -117,6 +117,9 @@ iex(3)> return(1)
 ...(3)> |> Effect.execute()
 {:error, "something went wrong"}
 ```
+
+`Effect.or_else/2` allows you to catch an error and return an effect
+(it may be another error or a successfull one).
 
 #### Pipe
 
@@ -142,17 +145,17 @@ iex(3)> Pipe.new()
 {:ok, %{x: 1, y: 2}}
 ```
 
-As you can see, it's similar to `Effect.Monad.bind/2`, but it tags
+As you can see, it's similar to `Effect.bind/2`, but it tags
 results and collects them into a map that's returned after
 execution. In case the pipeline fails, you get the name of a step it
 failed at.
 
 ```elixir
-iex(1)> import Effect.Monad, only: [return: 1]
-iex(2)> alias Effect.{Fail, Pipe}
+iex(1)> import Effect.Monad, only: [fail: 1, return: 1]
+iex(2)> alias Effect.Pipe
 iex(3)> Pipe.new()
 ...(3)> |> Pipe.then(:x, fn _ -> return(1) end)
-...(3)> |> Pipe.then(:y, fn %{x: x} -> Fail.new("oops") end)
+...(3)> |> Pipe.then(:y, fn %{x: x} -> fail("oops") end)
 ...(3)> |> Effect.execute()
 {:error, %{y: "oops"}}
 ```

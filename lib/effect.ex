@@ -143,6 +143,8 @@ defmodule Effect do
 
   @doc """
   Execute the effect.
+
+  See `Effect.Executable.execute/1` for details.
   """
   @spec execute(t) :: result
   def execute(effect) do
@@ -152,8 +154,7 @@ defmodule Effect do
   @doc """
   Interpret the effect.
 
-  It means that the effect will be executed with provided
-  `interpreter` instead of `execute/1`.
+  See `Effect.Interpretable.interpret/2` for details.
   """
   @spec interpret(t, (t -> result)) :: result
   def interpret(effect, interpreter) when is_function(interpreter, 1) do
